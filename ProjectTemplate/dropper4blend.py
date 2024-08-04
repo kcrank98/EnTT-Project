@@ -82,7 +82,7 @@ def build_json():
                 bbox_corners = [mathutils.Vector(corner) for corner in obj.bound_box]
                 for corner in bbox_corners:
                     # convert corners to vulkan/d3d coordinates
-                    corner[1], corner[2] = corner[2], corner[1]
+                    #corner[1], corner[2] = corner[2], corner[1]
                     cornerArrayForm = [corner[0], corner[1], corner[2]] # Makes parsing in the solution easier (maybe)
                     entity["bounds"].append(cornerArrayForm)
                 

@@ -38,7 +38,7 @@ public:
 		unsigned vertexCount, indexCount, materialCount, meshCount;
 		unsigned vertexStart, indexStart, materialStart, meshStart, batchStart;
 		unsigned colliderIndex; // *NEW* location of OBB in levelColliders
-		bool isDynamic, isCollidable;
+		bool isCollidable;
 
 	};
 	struct MODEL_INSTANCES // each instance of a model in the level
@@ -127,7 +127,6 @@ private:
 		std::string modelFile; // path to .h2b file
 		// *NEW* object aligned bounding box data: // LBN, LTN, LTF, LBF, RBN, RTN, RTF, RBF
 		GW::MATH2D::GVECTOR3F boundary[8];
-		bool isDynamic = false;
 		bool isCollidable = false;
 		mutable std::vector<std::string> blenderNames; // *NEW* names from blender
 		mutable std::vector<GW::MATH::GMATRIXF> instances; // where to draw
@@ -208,12 +207,6 @@ private:
 
 
 				// Check for custom data
-				if (EntityData.find("gameType") != EntityData.end())
-				{
-					std::string type = EntityData["gameType"];
-					add.isDynamic = strcmp("none", type.c_str());
-				}
-
 				if (EntityData.find("staticCollidable") != EntityData.end())
 				{
 					add.isCollidable = EntityData["staticCollidable"];
@@ -276,7 +269,6 @@ private:
 				model.materialStart = levelMaterials.size();
 				model.batchStart = levelBatches.size();
 				model.meshStart = levelMeshes.size();
-				model.isDynamic = i->isDynamic;
 				model.isCollidable = i->isCollidable;
 				// append/move all data
 				levelVertices.insert(levelVertices.end(), p.vertices.begin(), p.vertices.end());

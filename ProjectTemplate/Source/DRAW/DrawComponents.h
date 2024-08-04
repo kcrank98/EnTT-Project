@@ -63,9 +63,6 @@ namespace DRAW
 		H2B::ATTRIBUTES		matData;
 	};
 
-	// Tag to tell the renderer not to render an entity
-	struct DoNotRender {};
-
 	struct VulkanGPUInstanceBuffer
 	{
 		unsigned long long element_count = 1;

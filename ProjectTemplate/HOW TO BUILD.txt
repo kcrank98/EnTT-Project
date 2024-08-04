@@ -8,4 +8,4 @@ https://www.lunarg.com/vulkan-sdk/
 After installing reboot your machine and run: "cmake -S ./ -B ./build"
 in a command prompt located in this folder. The .sln will be in the build folder.
 
-This example only renders a triangle for now but should be expanded into basic asteroids or something.
+This example only clears the screen to a blue-gray initially.
