@@ -69,6 +69,11 @@ void GraphicsBehavior(entt::registry& registry)
 	
 	// TODO : Load the Level then update the Vertex and Index Buffers
 
+	std::string jsonPath = (*config).at("Level1").at("levelFile").as<std::string>();
+	std::string modelPath = (*config).at("Level1").at("modelPath").as<std::string>();
+	registry.emplace<DRAW::CPULevel>(display, jsonPath, modelPath);
+
+	registry.emplace<DRAW::GPULevel>(display);
 
 	// Register for Vulkan clean up
 	GW::CORE::GEventResponder shutdown;

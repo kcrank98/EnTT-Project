@@ -231,6 +231,59 @@ namespace DRAW
 		}
 	}
 
+	void Construct_CPULevel(entt::registry& registry, entt::entity entity) {
+		auto& cpuLevelData = registry.get<CPULevel>(entity);
+		GW::SYSTEM::GLog log;
+		log.Create("CPULevel log");
+		log.EnableConsoleLogging(true);
+
+		bool result = cpuLevelData.loadedData.LoadLevel(cpuLevelData.jsonPath.c_str(), cpuLevelData.modelPath.c_str(), log);
+	}
+	
+	void Construct_GPULevel(entt::registry& registry, entt::entity entity) {
+		CPULevel* gpuLevelData = registry.try_get<CPULevel>(entity);
+
+		if (gpuLevelData == nullptr)
+			return;
+
+		std::cout << "PASSED\n";
+
+		//emplace the buffer components
+		registry.emplace<DRAW::VulkanVertexBuffer>(entity);
+		registry.emplace<DRAW::VulkanIndexBuffer>(entity);
+
+		//emplace the data for the buffers
+		registry.emplace<std::vector<H2B::VERTEX>>(entity, gpuLevelData->loadedData.levelVertices);
+		registry.emplace<std::vector<unsigned>>(entity, gpuLevelData->loadedData.levelIndices);
+
+		//call the patch() to update the data onto the GPU
+		registry.patch<DRAW::VulkanVertexBuffer>(entity);
+		registry.patch<DRAW::VulkanIndexBuffer>(entity);
+
+		std::cout << "buffers are updated\n";
+
+		//getting rendering data
+		for (int i = 0; i < gpuLevelData->loadedData.blenderObjects.size(); ++i) {
+			auto& currBlenderObj = gpuLevelData->loadedData.blenderObjects[i];
+			auto& currModel = gpuLevelData->loadedData.levelModels[currBlenderObj.modelIndex];
+
+			for (int j = 0; j < currModel.meshCount; ++j) {
+				auto& currMesh = gpuLevelData->loadedData.levelMeshes[currModel.meshStart + j];
+
+				auto entityID = registry.create();
+
+				registry.emplace<DRAW::GeometryData>(entityID, 
+					currMesh.drawInfo.indexOffset,
+					currMesh.drawInfo.indexCount,
+					currModel.vertexStart);
+
+				registry.emplace<DRAW::GPUInstance>(entityID,
+					gpuLevelData->loadedData.levelTransforms[currBlenderObj.transformIndex],
+					gpuLevelData->loadedData.levelMaterials[(currMesh.materialIndex + currModel.materialStart)].attrib);
+			}
+		}
+	}
+
 	// Use this MACRO to connect the EnTT Component Logic
 	CONNECT_COMPONENT_LOGIC() {
 		// register the Window component's logic
@@ -247,6 +300,10 @@ namespace DRAW
 		registry.on_construct<VulkanUniformBuffer>().connect<Construct_VulkanUniformBuffer>();
 		registry.on_update<VulkanUniformBuffer>().connect<Update_VulkanUniformBuffer>();
 		registry.on_destroy<VulkanUniformBuffer>().connect<Destroy_VulkanUniformBuffer>();
+
+		// register the CPU and GPU level data
+		registry.on_construct<CPULevel>().connect<Construct_CPULevel>();
+		registry.on_construct<GPULevel>().connect<Construct_GPULevel>();
 	}
 
 } // namespace DRAW

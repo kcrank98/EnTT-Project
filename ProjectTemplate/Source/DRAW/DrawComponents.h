@@ -82,6 +82,17 @@ namespace DRAW
 		std::vector<VkDeviceMemory> memory;
 	};
 
+	struct CPULevel
+	{
+		std::string jsonPath;
+		std::string modelPath;
+		Level_Data loadedData;
+	};
+
+	struct GPULevel
+	{
+		
+	};
 
 	struct Camera
 	{
