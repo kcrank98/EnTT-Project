@@ -450,11 +450,61 @@ namespace DRAW
 			}
 
 			// TODO: Update buffers here before the bind of the descriptor sets
+			//creating the group with the components we need for rendering
+			//auto group = registry.group<DRAW::GeometryData>(entt::get<DRAW::GeometryData, DRAW::GPUInstance>);
+			//entt::basic_group group = registry.group<DRAW::GeometryData>(entt::get<DRAW::GPUInstance>);
+			entt::basic_group group = registry.group<>(entt::get<DRAW::GeometryData, DRAW::GPUInstance>);
+
+			//sorting the group using the GeometryData
+			group.sort<DRAW::GeometryData>([](const GeometryData &a, const GeometryData &b) {
+				return a < b;
+			});
+
+			//looping through all the entities in the group, add that entities GPUInstance to a vector and the GeometryData to a map
+			std::vector<GPUInstance> gpuInstanceData;
+			std::map<GeometryData, int> geometryData;
+			for (int i = 0; i < group.size(); ++i) {
+				DRAW::GeometryData& mapIndex = group.get<DRAW::GeometryData>(group[i]);
+
+				//std::map<GeometryData, int>::iterator it = geometryData.find(mapIndex);
+				if (geometryData.find(mapIndex) == geometryData.end())
+					geometryData[mapIndex] = 1;
+				else
+					geometryData[mapIndex]++;
+
+				DRAW::GPUInstance& vecIndex = group.get<DRAW::GPUInstance>(group[i]);
+				gpuInstanceData.push_back(vecIndex);
+			}
+
+			/*for (auto [entity, geoData, gpuData] : group.each()) {
+				gpuInstanceData.push_back(gpuData);
+
+				if (geometryData.find(geoData) != geometryData.end()) {
+					geometryData[geoData]++;
+				}
+				else {
+					geometryData[geoData] = 1;
+				}
+			}*/
+
+			//emplace the GPUInstance vector onto the renderer entity
+			registry.emplace<std::vector<DRAW::GPUInstance>>(entity, gpuInstanceData);
+
+			//update the VulkanGPUInstanceBuffer
+			registry.patch<DRAW::VulkanGPUInstanceBuffer>(entity);
 
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanRenderer.pipelineLayout, 0, 1, &vulkanRenderer.descriptorSets[frame], 0, nullptr);
 
 			// TODO: Draw all the things that need drawing
-			
+
+			//loop through our map of GeometryData
+			unsigned offset = 0;
+			for (const auto& [key, val] : geometryData) {
+
+				vkCmdDrawIndexed(commandBuffer, key.indexCount, val, key.indexStart, key.vertexStart, offset);
+
+				offset += val;
+			}
 		}
 
 		vulkanRenderer.vlkSurface.EndFrame(true);

@@ -273,7 +273,7 @@ namespace DRAW
 				auto entityID = registry.create();
 
 				registry.emplace<DRAW::GeometryData>(entityID, 
-					currMesh.drawInfo.indexOffset,
+					currModel.indexStart,
 					currMesh.drawInfo.indexCount,
 					currModel.vertexStart);
 

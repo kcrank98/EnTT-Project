@@ -75,6 +75,9 @@ void GraphicsBehavior(entt::registry& registry)
 
 	registry.emplace<DRAW::GPULevel>(display);
 
+	//registry.patch<DRAW::CPULevel>(display);
+	//registry.patch<DRAW::GPULevel>(display);
+
 	// Register for Vulkan clean up
 	GW::CORE::GEventResponder shutdown;
 	shutdown.Create([&](const GW::GEvent& e) {
