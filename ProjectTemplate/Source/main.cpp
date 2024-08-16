@@ -119,6 +119,79 @@ void GameplayBehavior(entt::registry& registry)
 	// Seed the rand
 	unsigned int time = std::chrono::steady_clock::now().time_since_epoch().count();
 	srand(time);
+
+	//Lab 2 part 2
+	//create player and enemy entities
+	auto gameManagerID = registry.create();
+	registry.emplace<GAME::GameManager>(gameManagerID);
+
+	auto playerID = registry.create();
+	auto enemyID = registry.create();
+	
+	auto& playerIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(playerID);
+	auto& playerTrans = registry.emplace<GAME::Transform>(playerID);
+	registry.emplace<GAME::Player>(playerID);
+	auto& enemyIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(enemyID);
+	auto& enemyTrans = registry.emplace<GAME::Transform>(enemyID);
+	registry.emplace<GAME::Enemy>(enemyID);
+
+	std::string playerModel = (*config).at("Player").at("model").as<std::string>();
+	std::string enemyModel = (*config).at("Enemy1").at("model").as<std::string>();
+
+	//auto& playerManager = registry.get<DRAW::ModelManager>(playerID);
+	auto& modelManager = registry.get<DRAW::ModelManager>(registry.view<DRAW::ModelManager>().front());
+
+	if (modelManager.MeshCollections.find(playerModel) != modelManager.MeshCollections.end()) {
+		for (int i = 0; i < modelManager.MeshCollections[playerModel].dynamicEntities.size(); ++i) {
+			//grab reference
+			entt::entity currEnt = modelManager.MeshCollections[playerModel].dynamicEntities[i];
+			DRAW::GPUInstance currGPU = registry.get<DRAW::GPUInstance>(currEnt);
+			DRAW::GeometryData currGeo = registry.get<DRAW::GeometryData>(currEnt);
+			GW::MATH::GMATRIXF currTransform = currGPU.transform;
+
+			playerTrans.transform = currTransform;
+
+			//for each mesh we will create a copy onto a new entity and add it to the players meshcollection
+			auto playerCopy = registry.create();
+
+			registry.emplace<DRAW::GPUInstance>(playerCopy,
+												playerTrans.transform,
+												currGPU.matData);
+
+			registry.emplace<DRAW::GeometryData>(playerCopy,
+												currGeo.indexStart,
+												currGeo.indexCount,
+												currGeo.vertexStart);
+
+			playerIDMeshCollection.dynamicEntities.push_back(playerCopy);
+		}
+	}
+
+	if (modelManager.MeshCollections.find(enemyModel) != modelManager.MeshCollections.end()) {
+		for (int i = 0; i < modelManager.MeshCollections[enemyModel].dynamicEntities.size(); ++i) {
+			//grab reference
+			entt::entity currEnt = modelManager.MeshCollections[enemyModel].dynamicEntities[i];
+			DRAW::GPUInstance currGPU = registry.get<DRAW::GPUInstance>(currEnt);
+			DRAW::GeometryData currGeo = registry.get<DRAW::GeometryData>(currEnt);
+			GW::MATH::GMATRIXF currTransform = currGPU.transform;
+
+			enemyTrans.transform = currTransform;
+
+			//for each mesh we will create a copy onto a new entity and add it to the players meshcollection
+			auto enemyCopy = registry.create();
+
+			registry.emplace<DRAW::GPUInstance>(enemyCopy,
+												enemyTrans.transform,
+												currGPU.matData);
+
+			registry.emplace<DRAW::GeometryData>(enemyCopy,
+												currGeo.indexStart,
+												currGeo.indexCount,
+												currGeo.vertexStart);
+
+			enemyIDMeshCollection.dynamicEntities.push_back(enemyCopy);
+		}
+	}
 }
 
 // This function will be called by the main loop to update the main loop
@@ -138,6 +211,7 @@ void MainLoopBehavior(entt::registry& registry)
 		deltaTime = elapsed;
 
 		// TODO : Update Game
+		registry.patch<GAME::GameManager>(registry.view<GAME::GameManager>().front());
 
 		closedCount = 0;
 		// find all Windows that are not closed and call "patch" to update them

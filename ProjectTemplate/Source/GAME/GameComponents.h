@@ -7,9 +7,37 @@ namespace GAME
 	/// 
 	///*** Tags ***///
 	
+	struct Player
+	{
+
+	};
+
+	struct Enemy
+	{
+
+	};
+
+	struct Bullet
+	{
+
+	};
 
 	///*** Components ***///
 	
+	struct GameManager
+	{
+
+	};
+	
+	struct Transform
+	{
+		GW::MATH::GMATRIXF transform;
+	};
+
+	struct FiringState
+	{
+		float coolDown;
+	};
 
 }// namespace GAME
 #endif // !GAME_COMPONENTS_H_

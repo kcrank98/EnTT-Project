@@ -262,15 +262,39 @@ namespace DRAW
 
 		std::cout << "buffers are updated\n";
 
+		//Lab 2 part 1C, creating new entity to emplace ModelManager
+		auto entityID_ModelManager = registry.create();
+		registry.emplace<ModelManager>(entityID_ModelManager);
+
+		//get map MeshCollections
+		auto& modelManager = registry.get<ModelManager>(entityID_ModelManager);
+
 		//getting rendering data
 		for (int i = 0; i < gpuLevelData->loadedData.blenderObjects.size(); ++i) {
 			auto& currBlenderObj = gpuLevelData->loadedData.blenderObjects[i];
 			auto& currModel = gpuLevelData->loadedData.levelModels[currBlenderObj.modelIndex];
 
+			//Lab 2 part 1C, for each obj start a new MeshCollection
+			MESH_COLLECTION meshCollection;
+
+			//check loadedData.levelModels to see if isDynamic
+			//if yes, emplace the DoNotRender tag onto entity
+			bool dynamic = false;
+			if (currModel.isDynamic) {
+				dynamic = true;
+			}
+
 			for (int j = 0; j < currModel.meshCount; ++j) {
 				auto& currMesh = gpuLevelData->loadedData.levelMeshes[currModel.meshStart + j];
 
 				auto entityID = registry.create();
+
+				if (dynamic) {
+					registry.emplace<DRAW::DoNotRender>(entityID);
+
+					//if dynamic, add entity to meshCollections
+					meshCollection.dynamicEntities.push_back(entityID);
+				}
 
 				registry.emplace<DRAW::GeometryData>(entityID, 
 					currModel.indexStart,
@@ -280,6 +304,12 @@ namespace DRAW
 				registry.emplace<DRAW::GPUInstance>(entityID,
 					gpuLevelData->loadedData.levelTransforms[currBlenderObj.transformIndex],
 					gpuLevelData->loadedData.levelMaterials[(currMesh.materialIndex + currModel.materialStart)].attrib);
+			}
+
+			//once all meshes are created add collection to modelManager using blendername as Key
+			//only if dynamic
+			if (dynamic) {
+				modelManager.MeshCollections[currBlenderObj.blendername] = meshCollection;
 			}
 		}
 	}

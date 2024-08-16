@@ -453,7 +453,7 @@ namespace DRAW
 			//creating the group with the components we need for rendering
 			//auto group = registry.group<DRAW::GeometryData>(entt::get<DRAW::GeometryData, DRAW::GPUInstance>);
 			//entt::basic_group group = registry.group<DRAW::GeometryData>(entt::get<DRAW::GPUInstance>);
-			entt::basic_group group = registry.group<>(entt::get<DRAW::GeometryData, DRAW::GPUInstance>);
+			entt::basic_group group = registry.group<>(entt::get<DRAW::GeometryData, DRAW::GPUInstance>, entt::exclude<DRAW::DoNotRender>);
 
 			//sorting the group using the GeometryData
 			group.sort<DRAW::GeometryData>([](const GeometryData &a, const GeometryData &b) {

@@ -8,6 +8,11 @@ namespace DRAW
 {
 	//*** TAGS ***//
 
+	struct DoNotRender
+	{
+		
+	};
+
 	//*** COMPONENTS ***//
 	struct VulkanRendererInitialization
 	{
@@ -92,6 +97,16 @@ namespace DRAW
 	struct GPULevel
 	{
 		
+	};
+
+	struct MESH_COLLECTION
+	{
+		std::vector<entt::entity> dynamicEntities;
+	};
+
+	struct ModelManager
+	{
+		std::map<std::string, MESH_COLLECTION> MeshCollections;
 	};
 
 	struct Camera
