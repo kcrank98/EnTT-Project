@@ -21,7 +21,8 @@ void CreateBullet(entt::registry& registry, std::shared_ptr<const GameConfig>& c
 			entt::entity currEnt = modelManager.MeshCollections[bulletModel].dynamicEntities[i];
 			DRAW::GPUInstance currGPU = registry.get<DRAW::GPUInstance>(currEnt);
 			DRAW::GeometryData currGeo = registry.get<DRAW::GeometryData>(currEnt);
-			GW::MATH::GMATRIXF currTransform = currGPU.transform;
+			//GW::MATH::GMATRIXF currTransform = currGPU.transform;
+			bulletTrans.transform = playerTransform.transform;
 
 			//playerTrans.transform = currTransform;
 
@@ -29,7 +30,7 @@ void CreateBullet(entt::registry& registry, std::shared_ptr<const GameConfig>& c
 			auto bulletCopy = registry.create();
 
 			registry.emplace<DRAW::GPUInstance>(bulletCopy,
-												playerTransform.transform,
+												bulletTrans.transform,
 												currGPU.matData);
 
 			registry.emplace<DRAW::GeometryData>(bulletCopy,
@@ -79,7 +80,7 @@ void Update_Player(entt::registry& registry, entt::entity entity) {
 		input.immediateInput.GetState(G_KEY_RIGHT, isPressed[7]);
 		if (isPressed[4] == 1 || isPressed[5] == 1 || isPressed[6] == 1 || isPressed[7] == 1) {
 			CreateBullet(registry, config, enemyTran);
-			registry.emplace<GAME::FiringState>(entity, 10.0f);
+			registry.emplace<GAME::FiringState>(entity, 1000.0f);
 		}
 	}
 	else {
