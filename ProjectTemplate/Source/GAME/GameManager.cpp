@@ -2,11 +2,43 @@
 #include "../DRAW/DrawComponents.h"
 #include "../CCL.h"
 
+void Update_Velocity(entt::registry& registry) {
+	//says i need delta time but idk how to use that so maybe this will work?
+	auto& deltaTime = registry.get<UTIL::DeltaTime>(registry.view<UTIL::DeltaTime>().front()).dtSec;
+
+	static auto start = std::chrono::steady_clock::now();
+	double elapsed = std::chrono::duration<double>(
+		std::chrono::steady_clock::now() - start).count();
+	start = std::chrono::steady_clock::now();
+	deltaTime = elapsed;
+
+	//create view of everything with a transform AND a velocity
+	entt::basic_view view = registry.view<GAME::Transform, GAME::Velocity>();
+
+	for (auto& [ent, trans, velo] : view.each()) {
+
+		//copy obj velo
+		GW::MATH::GVECTORF veloCopy = velo.direction;
+
+		//scale by deltaTime
+		veloCopy.x *= deltaTime;
+		veloCopy.z *= deltaTime;
+
+		//translate
+		GW::MATH::GMatrix::TranslateGlobalF(trans.transform,
+											veloCopy,
+											trans.transform);
+
+	}
+
+}
+
 void Update_GameManager(entt::registry& registry, entt::entity entity) {
-	//patch the player using a group
-	//entt::basic_group group = registry.group<>(entt::get<GAME::Player>);
-	//entt::entity playerID = registry.group<>(entt::get<GAME::Player>).front();
+	//patch the player using a view
 	registry.patch<GAME::Player>(registry.view<GAME::Player>().front());
+
+	//call update_velocity here
+	Update_Velocity(registry);
 
 	//update the position of all the models
 	//create a view for all the entities that have a transform and a meshcollection

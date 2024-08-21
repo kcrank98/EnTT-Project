@@ -8,9 +8,12 @@ void CreateBullet(entt::registry& registry, std::shared_ptr<const GameConfig>& c
 
 	auto& bulletIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(bulletID);
 	auto& bulletTrans = registry.emplace<GAME::Transform>(bulletID);
+	registry.emplace<GAME::Velocity>(bulletID,
+		GW::MATH::GVECTORF{10.0f, 0.0f, 1.0f, 0.0f});
 	registry.emplace<GAME::Bullet>(bulletID);
 
 	std::string bulletModel = (*config).at("Bullet").at("model").as<std::string>();
+	float bulletSpeed = (*config).at("Bullet").at("speed").as<float>();
 
 	//auto& playerManager = registry.get<DRAW::ModelManager>(playerID);
 	auto& modelManager = registry.get<DRAW::ModelManager>(registry.view<DRAW::ModelManager>().front());
@@ -78,9 +81,18 @@ void Update_Player(entt::registry& registry, entt::entity entity) {
 		input.immediateInput.GetState(G_KEY_DOWN, isPressed[5]);
 		input.immediateInput.GetState(G_KEY_LEFT, isPressed[6]);
 		input.immediateInput.GetState(G_KEY_RIGHT, isPressed[7]);
+
+		//if(isPressed[4] == 1 || isPressed[6] ==1 || isPressed[7] ==1)
+		//{
+		//	CreateBullet(registry, config, enemyTran, isPressed[4, 6, 7])
+		//	registry.emplace<GAME::FiringState>(entity, 100.0f)
+		// 
+		//}
+		//do the same for isPressed[5, 6, 7]
+
 		if (isPressed[4] == 1 || isPressed[5] == 1 || isPressed[6] == 1 || isPressed[7] == 1) {
 			CreateBullet(registry, config, enemyTran);
-			registry.emplace<GAME::FiringState>(entity, 1000.0f);
+			registry.emplace<GAME::FiringState>(entity, 100.0f);
 		}
 	}
 	else {

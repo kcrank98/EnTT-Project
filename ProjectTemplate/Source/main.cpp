@@ -133,10 +133,13 @@ void GameplayBehavior(entt::registry& registry)
 	registry.emplace<GAME::Player>(playerID);
 	auto& enemyIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(enemyID);
 	auto& enemyTrans = registry.emplace<GAME::Transform>(enemyID);
+	registry.emplace<GAME::Velocity>(enemyID,
+		GW::MATH::GVECTORF{5.0f, 0.0f, 1.0f, 0.0f});
 	registry.emplace<GAME::Enemy>(enemyID);
 
 	std::string playerModel = (*config).at("Player").at("model").as<std::string>();
 	std::string enemyModel = (*config).at("Enemy1").at("model").as<std::string>();
+	float enemySpeed = (*config).at("Enemy1").at("speed").as<float>();
 
 	//auto& playerManager = registry.get<DRAW::ModelManager>(playerID);
 	auto& modelManager = registry.get<DRAW::ModelManager>(registry.view<DRAW::ModelManager>().front());
