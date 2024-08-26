@@ -23,6 +23,16 @@ namespace GAME
 
 	};
 
+	struct Collidable
+	{
+
+	};
+
+	struct Obstacle
+	{
+
+	};
+
 	///*** Components ***///
 	
 	struct GameManager
@@ -43,6 +53,11 @@ namespace GAME
 	struct FiringState
 	{
 		float coolDown;
+	};
+
+	struct Health
+	{
+		int healthAmount;
 	};
 
 }// namespace GAME

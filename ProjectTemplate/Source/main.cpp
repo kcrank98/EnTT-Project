@@ -130,24 +130,38 @@ void GameplayBehavior(entt::registry& registry)
 	
 	auto& playerIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(playerID);
 	auto& playerTrans = registry.emplace<GAME::Transform>(playerID);
+	auto& playerHealth = registry.emplace<GAME::Health>(playerID);
 	registry.emplace<GAME::Player>(playerID);
+	registry.emplace<GAME::Collidable>(playerID);
 	auto& enemyIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(enemyID);
 	auto& enemyTrans = registry.emplace<GAME::Transform>(enemyID);
-	registry.emplace<GAME::Velocity>(enemyID,
-		GW::MATH::GVECTORF{5.0f, 0.0f, 1.0f, 0.0f});
+	auto& enemyHealthRef = registry.emplace<GAME::Health>(enemyID);
+	auto& enemyVelo = registry.emplace<GAME::Velocity>(enemyID,
+		GW::MATH::GVECTORF{0.0f, 0.0f, 0.0f, 0.0f});
 	registry.emplace<GAME::Enemy>(enemyID);
+	registry.emplace<GAME::Collidable>(enemyID);
 
 	std::string playerModel = (*config).at("Player").at("model").as<std::string>();
 	std::string enemyModel = (*config).at("Enemy1").at("model").as<std::string>();
+	int enemyHealth = (*config).at("Enemy1").at("hitpoints").as<int>();
 	float enemySpeed = (*config).at("Enemy1").at("speed").as<float>();
+
+	enemyHealthRef.healthAmount = enemyHealth;
+
+	GW::MATH::GVECTORF normalizedVec = UTIL::GetRandomVelocityVector();
+	GW::MATH::GVector::ScaleF(normalizedVec, enemySpeed, enemyVelo.direction);
 
 	//auto& playerManager = registry.get<DRAW::ModelManager>(playerID);
 	auto& modelManager = registry.get<DRAW::ModelManager>(registry.view<DRAW::ModelManager>().front());
+
+	//making a view for CPULevel for the collider info
+	DRAW::CPULevel gpuLevelData = registry.get<DRAW::CPULevel>(registry.view<DRAW::CPULevel>().front());
 
 	if (modelManager.MeshCollections.find(playerModel) != modelManager.MeshCollections.end()) {
 		for (int i = 0; i < modelManager.MeshCollections[playerModel].dynamicEntities.size(); ++i) {
 			//grab reference
 			entt::entity currEnt = modelManager.MeshCollections[playerModel].dynamicEntities[i];
+			GW::MATH::GOBBF currColl = modelManager.MeshCollections[playerModel].collider;
 			DRAW::GPUInstance currGPU = registry.get<DRAW::GPUInstance>(currEnt);
 			DRAW::GeometryData currGeo = registry.get<DRAW::GeometryData>(currEnt);
 			GW::MATH::GMATRIXF currTransform = currGPU.transform;
@@ -167,6 +181,7 @@ void GameplayBehavior(entt::registry& registry)
 												currGeo.vertexStart);
 
 			playerIDMeshCollection.dynamicEntities.push_back(playerCopy);
+			playerIDMeshCollection.collider = currColl;
 		}
 	}
 
@@ -174,9 +189,14 @@ void GameplayBehavior(entt::registry& registry)
 		for (int i = 0; i < modelManager.MeshCollections[enemyModel].dynamicEntities.size(); ++i) {
 			//grab reference
 			entt::entity currEnt = modelManager.MeshCollections[enemyModel].dynamicEntities[i];
+			GW::MATH::GOBBF currColl = modelManager.MeshCollections[enemyModel].collider;
 			DRAW::GPUInstance currGPU = registry.get<DRAW::GPUInstance>(currEnt);
 			DRAW::GeometryData currGeo = registry.get<DRAW::GeometryData>(currEnt);
 			GW::MATH::GMATRIXF currTransform = currGPU.transform;
+
+			//more refs for getting the collider
+			/*auto& currBlenderObj = gpuLevelData.loadedData.blenderObjects[i];
+			auto& currModel = gpuLevelData.loadedData.levelModels[currBlenderObj.modelIndex];*/
 
 			enemyTrans.transform = currTransform;
 
@@ -193,6 +213,7 @@ void GameplayBehavior(entt::registry& registry)
 												currGeo.vertexStart);
 
 			enemyIDMeshCollection.dynamicEntities.push_back(enemyCopy);
+			enemyIDMeshCollection.collider = currColl;
 		}
 	}
 }

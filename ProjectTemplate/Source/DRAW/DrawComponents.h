@@ -102,6 +102,7 @@ namespace DRAW
 	struct MESH_COLLECTION
 	{
 		std::vector<entt::entity> dynamicEntities;
+		GW::MATH::GOBBF collider;
 	};
 
 	struct ModelManager

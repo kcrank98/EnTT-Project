@@ -1,4 +1,5 @@
 #include "DrawComponents.h"
+#include "../GAME/GameComponents.h"
 #include "../CCL.h"
 namespace DRAW
 {
@@ -264,10 +265,10 @@ namespace DRAW
 
 		//Lab 2 part 1C, creating new entity to emplace ModelManager
 		auto entityID_ModelManager = registry.create();
-		registry.emplace<ModelManager>(entityID_ModelManager);
+		auto& modelManager = registry.emplace<ModelManager>(entityID_ModelManager);
 
 		//get map MeshCollections
-		auto& modelManager = registry.get<ModelManager>(entityID_ModelManager);
+		//auto& modelManager = registry.get<ModelManager>(entityID_ModelManager);
 
 		//getting rendering data
 		for (int i = 0; i < gpuLevelData->loadedData.blenderObjects.size(); ++i) {
@@ -283,6 +284,10 @@ namespace DRAW
 			if (currModel.isDynamic) {
 				dynamic = true;
 			}
+			bool collidable = false;
+			if (currModel.isCollidable) {
+				collidable = true;
+			}
 
 			for (int j = 0; j < currModel.meshCount; ++j) {
 				auto& currMesh = gpuLevelData->loadedData.levelMeshes[currModel.meshStart + j];
@@ -291,9 +296,30 @@ namespace DRAW
 
 				if (dynamic) {
 					registry.emplace<DRAW::DoNotRender>(entityID);
+					//registry.emplace<GAME::Collidable>(entityID); // testing
 
 					//if dynamic, add entity to meshCollections
 					meshCollection.dynamicEntities.push_back(entityID);
+					meshCollection.collider = gpuLevelData->loadedData.levelColliders[currModel.colliderIndex];
+					/*if (currBlenderObj.blendername == "Cactus" || currBlenderObj.blendername == "Turtle" || currBlenderObj.blendername == "Bullet") {
+						meshCollection.collider = gpuLevelData->loadedData.levelColliders[currModel.colliderIndex];
+					}*/
+					int debug = 0;
+				}
+				if (collidable) {
+					
+					meshCollection.collider = gpuLevelData->loadedData.levelColliders[currModel.colliderIndex + j];
+
+					auto collidableID = registry.create();
+					registry.emplace<GAME::Collidable>(collidableID);
+					registry.emplace<GAME::Obstacle>(collidableID);
+					
+					registry.emplace<DRAW::MESH_COLLECTION>(collidableID,
+															meshCollection.dynamicEntities,
+															meshCollection.collider);
+
+					registry.emplace<GAME::Transform>(collidableID,
+						gpuLevelData->loadedData.levelTransforms[currBlenderObj.transformIndex]);
 				}
 
 				registry.emplace<DRAW::GeometryData>(entityID, 

@@ -3,17 +3,97 @@
 #include "../UTIL/Utilities.h"
 #include "../CCL.h"
 
-void CreateBullet(entt::registry& registry, std::shared_ptr<const GameConfig>& config, GAME::Transform& playerTransform) {
+void CreateBullet(entt::registry& registry, std::shared_ptr<const GameConfig>& config, GAME::Transform& playerTransform,
+	float inputUp, float inputDown, float inputLeft, float inputRight) {
 	auto bulletID = registry.create();
 
 	auto& bulletIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(bulletID);
 	auto& bulletTrans = registry.emplace<GAME::Transform>(bulletID);
-	registry.emplace<GAME::Velocity>(bulletID,
-		GW::MATH::GVECTORF{10.0f, 0.0f, 1.0f, 0.0f});
+	auto& bulletVelo = registry.emplace<GAME::Velocity>(bulletID,
+		GW::MATH::GVECTORF{0.0f, 0.0f, 0.0f, 0.0f});
 	registry.emplace<GAME::Bullet>(bulletID);
+	registry.emplace<GAME::Collidable>(bulletID);
 
 	std::string bulletModel = (*config).at("Bullet").at("model").as<std::string>();
 	float bulletSpeed = (*config).at("Bullet").at("speed").as<float>();
+
+	//float Z_Change = inputUp - inputDown;
+	//float X_Change = inputLeft - inputRight;
+
+	//if (Z_Change && X_Change != 0) {
+	//	bulletVelo.direction = { X_Change, 0.0f, Z_Change, 0.0f };
+	//	//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+	//	GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+	//}
+
+	if (inputUp == 1) {
+		if (inputLeft == 1) {
+			bulletVelo.direction = { -1.0f, 0.0f, 1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+		else if (inputRight == 1) {
+			bulletVelo.direction = { 1.0f, 0.0f, 1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+		else {
+			bulletVelo.direction = { 0.0f, 0.0f, 1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+	}
+	else if (inputDown == 1) {
+		if (inputLeft == 1) {
+			bulletVelo.direction = { -1.0f, 0.0f, -1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+		else if (inputRight == 1) {
+			bulletVelo.direction = { 1.0f, 0.0f, -1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+		else {
+			bulletVelo.direction = { 0.0f, 0.0f, -1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+	}
+	else if (inputLeft == 1) {
+		if (inputUp == 1) {
+			bulletVelo.direction = { -1.0f, 0.0f, 1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+		else if (inputDown == 1) {
+			bulletVelo.direction = { -1.0f, 0.0f, -1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+		else {
+			bulletVelo.direction = { -1.0f, 0.0f, 0.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+	}
+	else if (inputRight == 1) {
+		if (inputUp == 1) {
+			bulletVelo.direction = { 1.0f, 0.0f, 1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+		else if (inputDown == 1) {
+			bulletVelo.direction = { 1.0f, 0.0f, -1.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+		else {
+			bulletVelo.direction = { 1.0f, 0.0f, 0.0f, 0.0f };
+			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
+		}
+	}
 
 	//auto& playerManager = registry.get<DRAW::ModelManager>(playerID);
 	auto& modelManager = registry.get<DRAW::ModelManager>(registry.view<DRAW::ModelManager>().front());
@@ -22,6 +102,7 @@ void CreateBullet(entt::registry& registry, std::shared_ptr<const GameConfig>& c
 		for (int i = 0; i < modelManager.MeshCollections[bulletModel].dynamicEntities.size(); ++i) {
 			//grab reference
 			entt::entity currEnt = modelManager.MeshCollections[bulletModel].dynamicEntities[i];
+			GW::MATH::GOBBF currColl = modelManager.MeshCollections[bulletModel].collider;
 			DRAW::GPUInstance currGPU = registry.get<DRAW::GPUInstance>(currEnt);
 			DRAW::GeometryData currGeo = registry.get<DRAW::GeometryData>(currEnt);
 			//GW::MATH::GMATRIXF currTransform = currGPU.transform;
@@ -42,6 +123,7 @@ void CreateBullet(entt::registry& registry, std::shared_ptr<const GameConfig>& c
 												currGeo.vertexStart);
 
 			bulletIDMeshCollection.dynamicEntities.push_back(bulletCopy);
+			bulletIDMeshCollection.collider = currColl;
 		}
 	}
 }
@@ -82,16 +164,8 @@ void Update_Player(entt::registry& registry, entt::entity entity) {
 		input.immediateInput.GetState(G_KEY_LEFT, isPressed[6]);
 		input.immediateInput.GetState(G_KEY_RIGHT, isPressed[7]);
 
-		//if(isPressed[4] == 1 || isPressed[6] ==1 || isPressed[7] ==1)
-		//{
-		//	CreateBullet(registry, config, enemyTran, isPressed[4, 6, 7])
-		//	registry.emplace<GAME::FiringState>(entity, 100.0f)
-		// 
-		//}
-		//do the same for isPressed[5, 6, 7]
-
 		if (isPressed[4] == 1 || isPressed[5] == 1 || isPressed[6] == 1 || isPressed[7] == 1) {
-			CreateBullet(registry, config, enemyTran);
+			CreateBullet(registry, config, enemyTran, isPressed[4], isPressed[5], isPressed[6], isPressed[7]);
 			registry.emplace<GAME::FiringState>(entity, 100.0f);
 		}
 	}
