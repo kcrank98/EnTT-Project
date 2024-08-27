@@ -60,5 +60,11 @@ namespace GAME
 		int healthAmount;
 	};
 
+	struct Shatters
+	{
+		int shatterCount;
+		float scaleBy;
+	};
+
 }// namespace GAME
 #endif // !GAME_COMPONENTS_H_

@@ -130,12 +130,13 @@ void GameplayBehavior(entt::registry& registry)
 	
 	auto& playerIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(playerID);
 	auto& playerTrans = registry.emplace<GAME::Transform>(playerID);
-	auto& playerHealth = registry.emplace<GAME::Health>(playerID);
+	//auto& playerHealth = registry.emplace<GAME::Health>(playerID);
 	registry.emplace<GAME::Player>(playerID);
 	registry.emplace<GAME::Collidable>(playerID);
 	auto& enemyIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(enemyID);
 	auto& enemyTrans = registry.emplace<GAME::Transform>(enemyID);
 	auto& enemyHealthRef = registry.emplace<GAME::Health>(enemyID);
+	auto& enemyShatterRef = registry.emplace<GAME::Shatters>(enemyID);
 	auto& enemyVelo = registry.emplace<GAME::Velocity>(enemyID,
 		GW::MATH::GVECTORF{0.0f, 0.0f, 0.0f, 0.0f});
 	registry.emplace<GAME::Enemy>(enemyID);
@@ -145,17 +146,19 @@ void GameplayBehavior(entt::registry& registry)
 	std::string enemyModel = (*config).at("Enemy1").at("model").as<std::string>();
 	int enemyHealth = (*config).at("Enemy1").at("hitpoints").as<int>();
 	float enemySpeed = (*config).at("Enemy1").at("speed").as<float>();
+	float newEnemyScale = (*config).at("Enemy1").at("scaleBy").as<float>();
+	//int enemyShatterAmount = (*config).at("Enemy1").at("shatterAmount").as<int>();
+	int enemyShatterCount = (*config).at("Enemy1").at("initialShatterCount").as<int>();
 
 	enemyHealthRef.healthAmount = enemyHealth;
+	enemyShatterRef.shatterCount = enemyShatterCount;
+	enemyShatterRef.scaleBy = newEnemyScale;
 
 	GW::MATH::GVECTORF normalizedVec = UTIL::GetRandomVelocityVector();
 	GW::MATH::GVector::ScaleF(normalizedVec, enemySpeed, enemyVelo.direction);
 
 	//auto& playerManager = registry.get<DRAW::ModelManager>(playerID);
 	auto& modelManager = registry.get<DRAW::ModelManager>(registry.view<DRAW::ModelManager>().front());
-
-	//making a view for CPULevel for the collider info
-	DRAW::CPULevel gpuLevelData = registry.get<DRAW::CPULevel>(registry.view<DRAW::CPULevel>().front());
 
 	if (modelManager.MeshCollections.find(playerModel) != modelManager.MeshCollections.end()) {
 		for (int i = 0; i < modelManager.MeshCollections[playerModel].dynamicEntities.size(); ++i) {

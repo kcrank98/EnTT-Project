@@ -29,12 +29,12 @@ void CreateBullet(entt::registry& registry, std::shared_ptr<const GameConfig>& c
 	if (inputUp == 1) {
 		if (inputLeft == 1) {
 			bulletVelo.direction = { -1.0f, 0.0f, 1.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 		else if (inputRight == 1) {
 			bulletVelo.direction = { 1.0f, 0.0f, 1.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 		else {
@@ -46,51 +46,51 @@ void CreateBullet(entt::registry& registry, std::shared_ptr<const GameConfig>& c
 	else if (inputDown == 1) {
 		if (inputLeft == 1) {
 			bulletVelo.direction = { -1.0f, 0.0f, -1.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 		else if (inputRight == 1) {
 			bulletVelo.direction = { 1.0f, 0.0f, -1.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 		else {
 			bulletVelo.direction = { 0.0f, 0.0f, -1.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 	}
 	else if (inputLeft == 1) {
 		if (inputUp == 1) {
 			bulletVelo.direction = { -1.0f, 0.0f, 1.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 		else if (inputDown == 1) {
 			bulletVelo.direction = { -1.0f, 0.0f, -1.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 		else {
 			bulletVelo.direction = { -1.0f, 0.0f, 0.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 	}
 	else if (inputRight == 1) {
 		if (inputUp == 1) {
 			bulletVelo.direction = { 1.0f, 0.0f, 1.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 		else if (inputDown == 1) {
 			bulletVelo.direction = { 1.0f, 0.0f, -1.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 		else {
 			bulletVelo.direction = { 1.0f, 0.0f, 0.0f, 0.0f };
-			//GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
+			GW::MATH::GVector::NormalizeF(bulletVelo.direction, bulletVelo.direction);
 			GW::MATH::GVector::ScaleF(bulletVelo.direction, bulletSpeed, bulletVelo.direction);
 		}
 	}
@@ -133,18 +133,21 @@ void Update_Player(entt::registry& registry, entt::entity entity) {
 		registry.view<UTIL::Config>().front()).gameConfig;
 
 	auto& input = registry.get<UTIL::Input>(registry.view<UTIL::Input>().front());
-	auto& time = registry.get<UTIL::DeltaTime>(registry.view<UTIL::DeltaTime>().front());
+	auto& deltaTime = registry.get<UTIL::DeltaTime>(registry.view<UTIL::DeltaTime>().front()).dtSec;
 
 	static auto start = std::chrono::steady_clock::now();
 	double elapsed = std::chrono::duration<double>(
 		std::chrono::steady_clock::now() - start).count();
 	start = std::chrono::steady_clock::now();
+	deltaTime = elapsed;
 	
 	float playerSpeed = (*config).at("Player").at("speed").as<float>();
-	float decreaseCooldown = (*config).at("Player").at("firerate").as<float>();
+	float cooldown = (*config).at("Player").at("firerate").as<float>();
 
-	float playerElapsed = playerSpeed * elapsed;
+	float playerElapsed = playerSpeed * deltaTime;
 	float isPressed[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	//cooldown *= deltaTime;
 
 	input.immediateInput.GetState(G_KEY_W, isPressed[0]);
 	input.immediateInput.GetState(G_KEY_S, isPressed[1]);
@@ -166,19 +169,22 @@ void Update_Player(entt::registry& registry, entt::entity entity) {
 
 		if (isPressed[4] == 1 || isPressed[5] == 1 || isPressed[6] == 1 || isPressed[7] == 1) {
 			CreateBullet(registry, config, enemyTran, isPressed[4], isPressed[5], isPressed[6], isPressed[7]);
-			registry.emplace<GAME::FiringState>(entity, 100.0f);
+			registry.emplace<GAME::FiringState>(entity, cooldown);
 		}
 	}
 	else {
-		hasFired->coolDown -= decreaseCooldown;
+		hasFired->coolDown -= deltaTime;
 		if (hasFired->coolDown <= 0) {
 			registry.remove<GAME::FiringState>(entity);
 		}
 	}
 
+	GW::MATH::GVECTORF playerSpeedNormalized = { (-X_Change), 0, Z_Change, 0 };
+	GW::MATH::GVector::NormalizeF(playerSpeedNormalized, playerSpeedNormalized);
+	GW::MATH::GVector::ScaleF(playerSpeedNormalized, playerElapsed, playerSpeedNormalized);
 	GW::MATH::GMatrix::TranslateLocalF(playerTrans.transform,
-		GW::MATH::GVECTORF{X_Change* (-playerElapsed), 0, Z_Change* playerElapsed},
-		playerTrans.transform);
+									playerSpeedNormalized,
+									playerTrans.transform);
 
 	//reset input states
 	for (auto& state : isPressed) {

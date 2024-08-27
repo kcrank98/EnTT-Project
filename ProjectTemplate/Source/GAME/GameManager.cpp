@@ -3,7 +3,6 @@
 #include "../CCL.h"
 
 void Update_Velocity(entt::registry& registry) {
-	//says i need delta time but idk how to use that so maybe this will work?
 	auto& deltaTime = registry.get<UTIL::DeltaTime>(registry.view<UTIL::DeltaTime>().front()).dtSec;
 
 	static auto start = std::chrono::steady_clock::now();
@@ -133,16 +132,115 @@ void Update_Physics(entt::registry& registry, const double& deltaTime = 0) {
 				if (registry.all_of<GAME::Bullet>(*iter) && registry.all_of<GAME::Enemy>(*j)) {
 					registry.destroy(*iter);
 					
-					GAME::Health& enemyHP = registry.get<GAME::Health>(*j);
-					enemyHP.healthAmount--;
+					GAME::Health* enemyHP = registry.try_get<GAME::Health>(*j);
+					if (enemyHP != nullptr) {
+						enemyHP->healthAmount -= 1;
+					}
+					int debug = 0;
 				}
 				if (registry.all_of<GAME::Bullet>(*j) && registry.all_of<GAME::Enemy>(*iter)) {
 					registry.destroy(*j);
 
-					GAME::Health& enemyHP = registry.get<GAME::Health>(*iter);
-					enemyHP.healthAmount--;
+					GAME::Health* enemyHP = registry.try_get<GAME::Health>(*iter);
+					if (enemyHP != nullptr) {
+						enemyHP->healthAmount -= 1;
+					}
+					int debug = 0;
 				}
 			}
+		}
+	}
+}
+
+void CreateEnemy(entt::registry& registry, GAME::Shatters* shatterComponent, GW::MATH::GMATRIXF enemyLocation) {
+	auto& modelManager = registry.get<DRAW::ModelManager>(registry.view<DRAW::ModelManager>().front());
+	std::shared_ptr<const GameConfig> config = registry.get<UTIL::Config>(
+		registry.view<UTIL::Config>().front()).gameConfig;
+
+	auto enemyID = registry.create();
+
+	std::string enemyModel = (*config).at("Enemy1").at("model").as<std::string>();
+	int enemyHealth = (*config).at("Enemy1").at("hitpoints").as<int>();
+	float enemySpeed = (*config).at("Enemy1").at("speed").as<float>();
+	float newEnemyScale = (*config).at("Enemy1").at("scaleBy").as<float>();
+
+	auto& enemyIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(enemyID);
+	auto& enemyTrans = registry.emplace<GAME::Transform>(enemyID);
+	auto& enemyHealthRef = registry.emplace<GAME::Health>(enemyID);
+
+	if (shatterComponent->shatterCount != 0) {
+		auto& enemyShatterRef = registry.emplace<GAME::Shatters>(enemyID);
+		enemyShatterRef.shatterCount = shatterComponent->shatterCount - 1;
+		enemyShatterRef.scaleBy = newEnemyScale;
+	}
+	enemyHealthRef.healthAmount = enemyHealth;
+
+	auto& enemyVelo = registry.emplace<GAME::Velocity>(enemyID,
+		GW::MATH::GVECTORF{0.0f, 0.0f, 0.0f, 0.0f});
+	registry.emplace<GAME::Enemy>(enemyID);
+	registry.emplace<GAME::Collidable>(enemyID);
+
+
+	GW::MATH::GVECTORF normalizedVec = UTIL::GetRandomVelocityVector();
+	GW::MATH::GVector::ScaleF(normalizedVec, enemySpeed, enemyVelo.direction);
+
+	if (modelManager.MeshCollections.find(enemyModel) != modelManager.MeshCollections.end()) {
+		for (int i = 0; i < modelManager.MeshCollections[enemyModel].dynamicEntities.size(); ++i) {
+			//grab reference
+			entt::entity currEnt = modelManager.MeshCollections[enemyModel].dynamicEntities[i];
+			GW::MATH::GOBBF currColl = modelManager.MeshCollections[enemyModel].collider;
+			DRAW::GPUInstance currGPU = registry.get<DRAW::GPUInstance>(currEnt);
+			DRAW::GeometryData currGeo = registry.get<DRAW::GeometryData>(currEnt);
+			GW::MATH::GMATRIXF currTransform = currGPU.transform;
+
+			GW::MATH::GMatrix::ScaleLocalF(enemyLocation, 
+				GW::MATH::GVECTORF{newEnemyScale, newEnemyScale, newEnemyScale}, 
+				enemyLocation);
+
+			//enemyTrans.transform = currTransform;
+			enemyTrans.transform = enemyLocation;
+
+			//for each mesh we will create a copy onto a new entity and add it to the players meshcollection
+			auto enemyCopy = registry.create();
+
+			registry.emplace<DRAW::GPUInstance>(enemyCopy,
+				enemyTrans.transform,
+				currGPU.matData);
+
+			registry.emplace<DRAW::GeometryData>(enemyCopy,
+				currGeo.indexStart,
+				currGeo.indexCount,
+				currGeo.vertexStart);
+
+			enemyIDMeshCollection.dynamicEntities.push_back(enemyCopy);
+			enemyIDMeshCollection.collider = currColl;
+		}
+	}
+}
+
+void CheckHealth(entt::registry& registry) {
+	//make a view of everything with the Health component (should just be the enemies!)
+	entt::basic_view view = registry.view<GAME::Health>();
+	std::shared_ptr<const GameConfig> config = registry.get<UTIL::Config>(
+		registry.view<UTIL::Config>().front()).gameConfig;
+
+	int enemyShatterAmount = (*config).at("Enemy1").at("shatterAmount").as<int>();
+
+	//loop though view
+	for (auto [ent, hp] : view.each()) {
+		//check if health is 0 or less
+		if (hp.healthAmount <= 0) {
+			//check if also shatters
+			GAME::Shatters* enemyShatter = registry.try_get<GAME::Shatters>(ent);
+
+			if (enemyShatter != nullptr) {
+				GW::MATH::GMATRIXF currLocation = registry.get<GAME::Transform>(ent).transform;
+
+				for (int i = 0; i < enemyShatterAmount; ++i) {
+					CreateEnemy(registry, enemyShatter, currLocation);
+				}
+			}
+			registry.destroy(ent);
 		}
 	}
 }
@@ -170,6 +268,9 @@ void Update_GameManager(entt::registry& registry, entt::entity entity) {
 	}
 
 	Update_Physics(registry);
+
+	//check health here
+	CheckHealth(registry);
 }
 
 CONNECT_COMPONENT_LOGIC() {
