@@ -33,6 +33,11 @@ namespace GAME
 
 	};
 
+	struct GameOver
+	{
+
+	};
+
 	///*** Components ***///
 	
 	struct GameManager
@@ -64,6 +69,11 @@ namespace GAME
 	{
 		int shatterCount;
 		float scaleBy;
+	};
+
+	struct Invulnerability
+	{
+		float decrement;
 	};
 
 }// namespace GAME

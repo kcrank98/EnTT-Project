@@ -160,6 +160,7 @@ void Update_Player(entt::registry& registry, entt::entity entity) {
 	GAME::Transform& playerTrans = registry.get<GAME::Transform>(entity);
 	GAME::Transform enemyTran = playerTrans;
 
+	GAME::Invulnerability* isInvuln = registry.try_get<GAME::Invulnerability>(entity);
 	GAME::FiringState* hasFired = registry.try_get<GAME::FiringState>(entity);
 	if (hasFired == nullptr) {
 		input.immediateInput.GetState(G_KEY_UP, isPressed[4]);
@@ -176,6 +177,13 @@ void Update_Player(entt::registry& registry, entt::entity entity) {
 		hasFired->coolDown -= deltaTime;
 		if (hasFired->coolDown <= 0) {
 			registry.remove<GAME::FiringState>(entity);
+		}
+	}
+
+	if (isInvuln != nullptr) {
+		isInvuln->decrement -= deltaTime;
+		if (isInvuln->decrement <= 0) {
+			registry.remove<GAME::Invulnerability>(entity);
 		}
 	}
 

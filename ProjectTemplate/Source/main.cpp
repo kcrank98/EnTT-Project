@@ -130,7 +130,8 @@ void GameplayBehavior(entt::registry& registry)
 	
 	auto& playerIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(playerID);
 	auto& playerTrans = registry.emplace<GAME::Transform>(playerID);
-	//auto& playerHealth = registry.emplace<GAME::Health>(playerID);
+	auto& playerHealth = registry.emplace<GAME::Health>(playerID);
+	//auto& playerInvul = registry.emplace<GAME::Invulnerability>(playerID);
 	registry.emplace<GAME::Player>(playerID);
 	registry.emplace<GAME::Collidable>(playerID);
 	auto& enemyIDMeshCollection = registry.emplace<DRAW::MESH_COLLECTION>(enemyID);
@@ -143,6 +144,8 @@ void GameplayBehavior(entt::registry& registry)
 	registry.emplace<GAME::Collidable>(enemyID);
 
 	std::string playerModel = (*config).at("Player").at("model").as<std::string>();
+	int playerHP = (*config).at("Player").at("hitpoints").as<int>();
+	//float playerDecrement = (*config).at("Player").at("invulnerability").as<float>();
 	std::string enemyModel = (*config).at("Enemy1").at("model").as<std::string>();
 	int enemyHealth = (*config).at("Enemy1").at("hitpoints").as<int>();
 	float enemySpeed = (*config).at("Enemy1").at("speed").as<float>();
@@ -150,6 +153,8 @@ void GameplayBehavior(entt::registry& registry)
 	//int enemyShatterAmount = (*config).at("Enemy1").at("shatterAmount").as<int>();
 	int enemyShatterCount = (*config).at("Enemy1").at("initialShatterCount").as<int>();
 
+	playerHealth.healthAmount = playerHP;
+	//playerInvul.decrement = playerDecrement;
 	enemyHealthRef.healthAmount = enemyHealth;
 	enemyShatterRef.shatterCount = enemyShatterCount;
 	enemyShatterRef.scaleBy = newEnemyScale;

@@ -147,6 +147,40 @@ void Update_Physics(entt::registry& registry, const double& deltaTime = 0) {
 					}
 					int debug = 0;
 				}
+				if (registry.all_of<GAME::Player>(*iter) && registry.all_of<GAME::Enemy>(*j)) {
+					GAME::Invulnerability* isInvuln = registry.try_get<GAME::Invulnerability>(*iter);
+
+					if (isInvuln != nullptr) {
+
+					}
+					else {
+						registry.emplace<GAME::Invulnerability>(*iter, 3.0f);
+
+						GAME::Health* playerHP = registry.try_get<GAME::Health>(*iter);
+						if (playerHP != nullptr) {
+							playerHP->healthAmount -= 1;
+							std::cout << playerHP->healthAmount << std::endl;
+						}
+					}
+					int debug = 0;
+				}
+				if (registry.all_of<GAME::Player>(*j) && registry.all_of<GAME::Enemy>(*iter)) {
+					GAME::Invulnerability* isInvuln = registry.try_get<GAME::Invulnerability>(*j);
+
+					if (isInvuln != nullptr) {
+
+					}
+					else {
+						registry.emplace<GAME::Invulnerability>(*j, 3.0f);
+
+						GAME::Health* playerHP = registry.try_get<GAME::Health>(*j);
+						if (playerHP != nullptr) {
+							playerHP->healthAmount -= 1;
+							std::cout << playerHP->healthAmount << std::endl;
+						}
+					}
+					int debug = 0;
+				}
 			}
 		}
 	}
@@ -220,7 +254,7 @@ void CreateEnemy(entt::registry& registry, GAME::Shatters* shatterComponent, GW:
 
 void CheckHealth(entt::registry& registry) {
 	//make a view of everything with the Health component (should just be the enemies!)
-	entt::basic_view view = registry.view<GAME::Health>();
+	entt::basic_view view = registry.view<GAME::Health, GAME::Enemy>();
 	std::shared_ptr<const GameConfig> config = registry.get<UTIL::Config>(
 		registry.view<UTIL::Config>().front()).gameConfig;
 
@@ -245,32 +279,62 @@ void CheckHealth(entt::registry& registry) {
 	}
 }
 
-void Update_GameManager(entt::registry& registry, entt::entity entity) {
-	//patch the player using a view
-	registry.patch<GAME::Player>(registry.view<GAME::Player>().front());
-
-	//call update_velocity here
-	Update_Velocity(registry);
-
-	//update the position of all the models
-	//create a view for all the entities that have a transform and a meshcollection
-	entt::basic_view view = registry.view<GAME::Transform, DRAW::MESH_COLLECTION>();
-
-	//loop for each entity and copy the transform to the GPUInstance
-	for (auto [ent, transorm, meshes] : view.each()) {
-		
-		for (auto meshID : meshes.dynamicEntities) {
-			//GAME::Transform currTransform = registry.get<GAME::Transform>(meshID);
-			DRAW::GPUInstance& currGPU = registry.get<DRAW::GPUInstance>(meshID);
-
-			currGPU.transform = transorm.transform;
+void CheckPlayerHealth(entt::registry& registry, entt::entity gameManagerID) {
+	entt::basic_view view = registry.view<GAME::Health, GAME::Player>();
+	int counter = 0;
+	int viewSize = 0;
+	for (auto [playerID, hp] : view.each()) {
+		if (hp.healthAmount <= 0) {
+			counter++;
 		}
+		viewSize++;
 	}
 
-	Update_Physics(registry);
+	if (counter == viewSize) {
+		registry.emplace<GAME::GameOver>(gameManagerID);
+		std::cout << "GAME OVER, LOSER" << std::endl;
+	}
+	//GAME::GameOver* isGameOver = registry.try_get<GAME::GameOver>(gameManagerID);
+}
 
-	//check health here
-	CheckHealth(registry);
+void Update_GameManager(entt::registry& registry, entt::entity entity) {
+
+	bool isOver = registry.all_of<GAME::GameOver>(entity);
+	if (!isOver) {
+
+		//patch the player using a view
+		registry.patch<GAME::Player>(registry.view<GAME::Player>().front());
+
+		//call update_velocity here
+		Update_Velocity(registry);
+
+		//update the position of all the models
+		//create a view for all the entities that have a transform and a meshcollection
+		entt::basic_view view = registry.view<GAME::Transform, DRAW::MESH_COLLECTION>();
+
+		//loop for each entity and copy the transform to the GPUInstance
+		for (auto [ent, transorm, meshes] : view.each()) {
+			
+			for (auto meshID : meshes.dynamicEntities) {
+				//GAME::Transform currTransform = registry.get<GAME::Transform>(meshID);
+				DRAW::GPUInstance& currGPU = registry.get<DRAW::GPUInstance>(meshID);
+
+				currGPU.transform = transorm.transform;
+			}
+		}
+
+		Update_Physics(registry);
+
+		//check health here
+		CheckHealth(registry);
+		CheckPlayerHealth(registry, entity);
+
+		entt::basic_view enemyView = registry.view<GAME::Enemy>();
+		if (enemyView.empty()) {
+			registry.emplace<GAME::GameOver>(entity);
+			std::cout << "YOU WIN, GREAT JOB" << std::endl;
+		}
+	}
 }
 
 CONNECT_COMPONENT_LOGIC() {
